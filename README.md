@@ -3,7 +3,7 @@
 Code and cached tensors for the paper
 
 > **Reliability of LLM-as-a-Judge: Confidence-Signal Disagreement and Response-Order Sensitivity**
-> Sreejita Chatterjee, IIT Dharwad, India.
+> Sreejita Chatterjee, Indian Institute of Technology Dharwad, India.
 > JUDGe 2026: Can We Trust the Judge? (NeurIPS 2026 workshop), camera-ready version.
 
 This archive was first released, anonymized, alongside an earlier version of
@@ -81,6 +81,21 @@ SmolLM2-360M-Instruct, GPT-2, Pythia-160m, ResNet-50) and raw datasets
 (MT-Bench, WikiText-2, ImageNet-1k, Imagenette). All are public and are
 downloaded on first use by the `collect_*.py` scripts, or by
 `scripts/download_eval_data.py` for the vision datasets.
+
+**Model and data revisions.** The cached tensors were produced from these
+Hugging Face revisions. Pass `revision=` to `from_pretrained` / `load_dataset`
+to rebuild a cache against the same weights and data:
+
+| Model or dataset | Revision |
+|---|---|
+| `Qwen/Qwen2.5-0.5B-Instruct` | `7ae557604adf67be50417f59c2c2f167def9a775` |
+| `Qwen/Qwen2.5-1.5B-Instruct` | `989aa7980e4cf806f80c7fef2b1adb7bc71aa306` |
+| `HuggingFaceTB/SmolLM2-360M-Instruct` | `a10cc1512eabd3dde888204e902eca88bddb4951` |
+| `gpt2` | `607a30d783dfa663caf39e06633721c8d4cfcd7e` |
+| `EleutherAI/pythia-160m` | `50f5173d932e8e61f858120bcb800b97af589f46` |
+| `lmsys/mt_bench_human_judgments` (dataset) | `f7d2896d2cc5d80f8b55c2bbc722613555233c25` |
+
+ResNet-50 uses torchvision's `ResNet50_Weights.IMAGENET1K_V2`.
 
 **Seeds:** `seed=0` fixes every split, bootstrap and reseed (sweeps 0-4 where a
 script reseeds explicitly, e.g. `stability_across_splits.py`,
@@ -228,13 +243,39 @@ DTD/iNaturalist/Places365/ImageNet-C variants, `mahalanobis_feature_cache_*`,
 come from earlier development of the `deployment_reliability` pipeline and back
 no number in the paper.
 
+## Using the signals on your own judge
+
+The package installs directly from this repository:
+
+```bash
+pip install git+https://github.com/research-codebase-095/JUDGe-Supplementary
+```
+
+```python
+from deployment_reliability import featurize, DEFAULT_FEATURE_NAMES
+
+# logits: the judge's full next-token logits at the verdict position, shape (n, vocab)
+phi = featurize(logits, normalize_l2=True)   # (n, 5): msp, logit_margin, normalized_entropy, energy_score, logit_l2_norm
+verdict_a = logits[:, token_id_a] > logits[:, token_id_b]
+
+# swap-consistency: rerun with the two responses swapped, map the verdict back
+# to the original labelling, and compare
+swap_consistent = verdict_a == ~verdict_a_swapped
+```
+
+`scripts/collect_judge_verdicts.py` shows the full prompt, chat template and
+verdict-token extraction used in the paper.
+
 ## Citation
+
+GitHub's "Cite this repository" button reads `CITATION.cff`.
 
 ```bibtex
 @inproceedings{chatterjee2026reliability,
   title     = {Reliability of {LLM}-as-a-Judge: Confidence-Signal Disagreement and Response-Order Sensitivity},
   author    = {Chatterjee, Sreejita},
   booktitle = {JUDGe 2026: Can We Trust the Judge? (NeurIPS 2026 Workshop)},
-  year      = {2026}
+  year      = {2026},
+  url       = {https://openreview.net/forum?id=9lIJ2lRhwC}
 }
 ```

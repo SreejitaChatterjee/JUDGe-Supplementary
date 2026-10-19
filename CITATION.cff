@@ -1,0 +1,19 @@
+cff-version: 1.2.0
+message: "If you use this code or the cached data, please cite the paper below."
+title: "Code and cached tensors for: Reliability of LLM-as-a-Judge: Confidence-Signal Disagreement and Response-Order Sensitivity"
+type: software
+authors:
+  - family-names: Chatterjee
+    given-names: Sreejita
+    affiliation: "Indian Institute of Technology Dharwad, India"
+repository-code: "https://github.com/research-codebase-095/JUDGe-Supplementary"
+preferred-citation:
+  type: conference-paper
+  title: "Reliability of LLM-as-a-Judge: Confidence-Signal Disagreement and Response-Order Sensitivity"
+  authors:
+    - family-names: Chatterjee
+      given-names: Sreejita
+      affiliation: "Indian Institute of Technology Dharwad, India"
+  collection-title: "JUDGe 2026: Can We Trust the Judge? (NeurIPS 2026 Workshop)"
+  year: 2026
+  url: "https://openreview.net/forum?id=9lIJ2lRhwC"
