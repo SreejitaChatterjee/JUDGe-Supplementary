@@ -7,7 +7,7 @@ authors:
     given-names: Sreejita
     affiliation: "Indian Institute of Technology Dharwad, India"
 license: MIT
-repository-code: "https://github.com/research-codebase-095/JUDGe-Supplementary"
+repository-code: "https://github.com/SreejitaChatterjee/JUDGe-Supplementary"
 preferred-citation:
   type: conference-paper
   title: "Reliability of LLM-as-a-Judge: Confidence-Signal Disagreement and Response-Order Sensitivity"

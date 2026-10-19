@@ -248,7 +248,7 @@ no number in the paper.
 The package installs directly from this repository:
 
 ```bash
-pip install git+https://github.com/research-codebase-095/JUDGe-Supplementary
+pip install git+https://github.com/SreejitaChatterjee/JUDGe-Supplementary
 ```
 
 ```python
