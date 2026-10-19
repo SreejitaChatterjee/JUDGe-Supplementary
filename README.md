@@ -27,19 +27,21 @@ The camera-ready narrows several claims in response to review:
   order-averaging rule was selected on `id_test` among four rules, and the
   sixth feature was added after inspecting a pool that included `id_test`.
 - **Splits** for the judge task are row-level: rows of the same question can
-  fall in different splits. Only the combiner-vs-best-signal comparison was
-  re-checked with a question-level split (`question_level_resplit.py`).
-- **Routing** (the Execute/Verify/HITL rule R_tau) is specified but not
-  evaluated on the judge task. The submission's routing-cost table and its
-  supporting analyses are not reported in the camera-ready; the scripts are
-  kept for reference (see "Not reported in the camera-ready" below).
-- **Calibration** (ECE/Brier) comparisons are not reported, because they were
-  not assessed on a held-out split.
+  fall in different splits. The combiner-vs-best-signal comparison and routing
+  were re-checked with a question-level split (`question_level_resplit.py`,
+  `routing_robustness_checks.py`).
+- **Routing** (the Execute/Verify/HITL rule R_tau) is reported as a simulation
+  under an assumed cost table, with MT-Bench reference labels as outcomes
+  (Section 4.2, Table 7, Appendix A.5). It is not a deployed experiment. The
+  20-cell cost sweep realizes costs under each cell's own cost table
+  (`routing_robustness_checks.py`).
+- **Calibration** (ECE/Brier) of the routed scores is reported on `id_test` as
+  a single-split check (Appendix A.6).
 - **Multiplicity:** Holm correction covers only the combiner-vs-best-signal
   family; significance statements for swap-consistency and order averaging
   are not corrected for multiplicity.
 
-The paper's limitations section (item vi) states these in full.
+The paper's limitations (Appendix A.7, item vi) state these in full.
 
 ## Quickstart
 
@@ -144,14 +146,23 @@ limitation (vi).
 | `python scripts/pairwise_rank_discordance.py` | "POOLED-BOOTSTRAP-STABILIZED orientation" block: Table 3 |
 | `python scripts/direction_split_robustness_check.py` | Exploratory check of the per-configuration direction convention used in Table 3; backs no number in the paper |
 
-## Section 4.2: selective judging as a proposed, unevaluated procedure
+## Section 4.2, Table 7 (Appendix A.5): selective judging, a cost simulation
 
-The camera-ready specifies the routing rule R_tau and derives its thresholds
-(Appendix A.3) but does not evaluate it on the judge task. No script result is
-reported for this section. The submission's routing analyses are listed under
-"Not reported in the camera-ready" below.
+All routing numbers are mean simulated costs under the cost table
+c_E=10, c_V=1, c_V'=3, c_H=2 (tau_lo=0.500, tau_hi=0.875), with MT-Bench
+reference labels as outcomes.
 
-## Section 5.1, Tables 4 and 5
+| Command | Output |
+|---|---|
+| `python scripts/selective_judging_calibrated_msp.py` | Table 7: coverage, Verify/HITL counts, execution error and mean cost with question-id cluster-bootstrap 95% CIs for raw MSP, Platt-scaled MSP, the combiner, always-execute and always-verify (always-HITL is the constant 2.000); e.g. 1.5B Platt-scaled MSP 1.841 [1.79, 1.90], combiner 1.827 [1.77, 1.88], always-verify 1.931 |
+| `python scripts/routing_multiplicity_check.py` | The four-comparison Bonferroni family (alpha/4=0.0125, 98.75% CIs, 5,000 resamples): at 1.5B both routed scores beat always-verify (combiner [-0.184, -0.023], Platt-scaled MSP [-0.169, -0.015]); at 0.5B neither does |
+| `python scripts/routing_robustness_checks.py` | Appendix A.3 and A.5: the 20-cell cost sweep (at 1.5B the combiner beats the best fixed policy in 10/20 cells and Platt-scaled MSP in 5/20; 0/20 at 0.5B), the reward term (-0.104 to -0.103), verdict inversion (1.751 and 1.727 at 1.5B), Platt-refit sensitivity (95% / 88.5% of refits below always-verify) and routing under the question-level split. Appendix A.6: ECE/Brier on `id_test` and the standardized combiner vs. the best single signal |
+| `python scripts/selective_judging.py` | Base MSP/combiner routing at the thresholds above |
+
+The router's threshold derivation and the scope of its action set are in
+Appendix A.3.
+
+## Section 5, Tables 4 and 5
 
 | Command | Output |
 |---|---|
@@ -172,7 +183,8 @@ check, 5-reseed stability). It has no separate script.
 
 ## Appendix A.3: router threshold derivation
 
-Analytical derivation in the paper; no script.
+Analytical derivation in the paper. The verdict-inversion numbers in "Scope of the action set" come from
+`scripts/routing_robustness_checks.py` (Section 4.2 above).
 
 ## Appendix A.4: extended backbone results (GPT-2, Pythia-160m)
 
@@ -181,7 +193,7 @@ Analytical derivation in the paper; no script.
 | `python scripts/paper_diagnostics.py` | §3/§10: standardized-refit AUROC (0.829 to 0.846) and nonlinear-combiner AUROC per LLM backbone |
 | `python scripts/combiner_regularization_sweep.py` | L2-penalty sweep: whether regularization strength alone explains GPT-2's gap vs. Pythia-160m needing standardization |
 
-## Appendix A.5: extended judge characterization
+## Appendix A.6: extended judge characterization
 
 | Command | Output |
 |---|---|
@@ -194,22 +206,24 @@ Analytical derivation in the paper; no script.
 | `python scripts/gbt_seed_variance.py` | 5-seed variance for the GBT combiner on the three LLM backbones |
 | `python scripts/matched_subset_reslice.py` | Re-slices the Qwen cache to the SmolLM2 subset for a like-for-like comparison |
 | `python scripts/question_level_resplit.py` | Question-level split (32/8/40 of 80 questions; 546/121/617 rows), combiner-vs-best-signal only: +0.050 (p=0.051) at 0.5B, -0.007 (p=0.169) at 1.5B |
-| `python scripts/selection_aware_bootstrap.py` | Best-signal selection noise (limitation iv), holding `id_test` fixed and resampling the calibration pool |
+| `python scripts/selection_aware_bootstrap.py` | Best-signal selection noise (Appendix A.7, limitation iv), holding `id_test` fixed and resampling the calibration pool |
 | `python scripts/sixth_signal_cluster_check.py` | Exploratory 5-vs-6-feature combiner gap at 1.5B: 0.673 to 0.728, question-id cluster-bootstrap CI [0.030, 0.081] with the fitted combiners held fixed (row-level split; not independently confirmed) |
 | `python scripts/swap_consistency_auroc_ci_1p5b.py` | Standalone swap-consistency AUROC at 1.5B on the full pool: 0.583, cluster-bootstrap CI [0.551, 0.613] |
 | `python scripts/swap_consistency_single_auroc_significance_0p5b.py` | Single-sample DeLong test of the standalone swap-consistency AUROC at 0.5B (0.503): z=0.97, p=0.33 |
 
 ## Not reported in the camera-ready
 
-These scripts back results from the submitted version that the camera-ready
-does not report. They are kept for reference only.
+These scripts back analyses from the submitted version. The camera-ready
+reports the corresponding results from `scripts/routing_robustness_checks.py`
+instead. They are kept for reference only.
 
-| Command | Submitted-version result | Why not reported |
+| Command | Submitted-version result | Camera-ready source |
 |---|---|---|
-| `python scripts/selective_judging.py`, `scripts/selective_judging_calibrated_msp.py` | Routing-cost table (MSP, Platt-scaled MSP, combiner, and always-act baselines) | The routed combiner score was not recalibrated, costs were assumed, the second forward pass was not counted, and no Verify/HITL outcome was observed |
-| `python scripts/routing_multiplicity_check.py` | Bonferroni family for the routing comparisons | Depends on the routing table above |
-| `python scripts/selective_judging_utility_and_sweep.py` | Reward-term robustness and the 20-cell cost-regime sweep | Depends on the routing table above |
-| `python scripts/calibration_reliability_bins.py` | ECE/Brier summary and reliability bins | Calibration was not assessed on a held-out split |
+| `python scripts/selective_judging_utility_and_sweep.py` | Reward-term robustness and a 20-cell cost-regime sweep in which costs are realized under the base table | `routing_robustness_checks.py`, which realizes costs under each cell's own table |
+| `python scripts/calibration_reliability_bins.py` | ECE/Brier summary and 10-bin reliability data | `routing_robustness_checks.py` (Appendix A.6 calibration detail) |
+
+`scripts/paper_diagnostics.py`, `scripts/stability_across_splits.py` and the
+other scripts above remain the sources for the sections that cite them.
 
 ## Reproducing a headline number (example)
 
@@ -227,11 +241,11 @@ scripts import one or the other.
 
 | Cache file | Backs |
 |---|---|
-| `judge_feature_cache_mtbench.pt` | Qwen2.5-0.5B-Instruct judge: Phi and correctness (Tables 1-4) |
+| `judge_feature_cache_mtbench.pt` | Qwen2.5-0.5B-Instruct judge: Phi and correctness (Tables 1-4 and 7) |
 | `judge_feature_cache_mtbench_1p5b.pt` | Qwen2.5-1.5B-Instruct judge: same |
-| `judge_feature_cache_mtbench_2way.pt`, `_1p5b_2way.pt` | 2-way Phi restriction (Section 3, Appendix A.5) |
+| `judge_feature_cache_mtbench_2way.pt`, `_1p5b_2way.pt` | 2-way Phi restriction (Section 3, Appendix A.6) |
 | `judge_feature_cache_mtbench_smollm2_360m.pt` (+`_2way`) | SmolLM2-360M non-confirmatory check (Section 4.1) |
-| `judge_swap_consistency_cache.pt`, `_1p5b.pt` | Order-swap test (Section 5.1) |
+| `judge_swap_consistency_cache.pt`, `_1p5b.pt` | Order-swap test (Section 5) |
 | `judge_swap_consistency_cache_continuous.pt` | Continuous order averaging (Table 5) |
 | `logit_cache_resnet50.pt` | Vision backbone fit/calibration sample (Imagenette) |
 | `logit_cache_imagenet1k_resnet50.pt` | 50,000-image ImageNet-1k `id_test` (Table 1, ResNet-50 row) |
